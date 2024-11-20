@@ -22,6 +22,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+    
+# 安装 Clash Verge 的依赖包
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libayatana-appindicator3-1 \
+    libwebkit2gtk-4.0-37 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 安装 noVNC
 RUN pip3 install websockify && \
