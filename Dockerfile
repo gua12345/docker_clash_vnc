@@ -6,7 +6,7 @@ ENV TZ=shanghai \
     VNC_HOST=127.0.0.1 \
     VNC_PORT=5901 \
     VNC_GEOMETRY=1280x800 \
-    TITLE=Clash Verge \
+    TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
     NOVNC_PORT=6081
 
