@@ -37,9 +37,9 @@ RUN wget -q https://github.com/clash-verge-rev/clash-verge-rev/releases/download
 # 设置工作目录
 WORKDIR /root
 
-# 创建启动脚本
-COPY startup.sh /root/startup.sh
-RUN chmod +x /root/startup.sh
+# 下载 startup.sh 并保存到镜像中
+RUN wget -O /root/startup.sh https://your-link-to-startup.sh && \
+    chmod +x /root/startup.sh
 
 # 暴露端口
 EXPOSE 5901 6081 7897 9097
