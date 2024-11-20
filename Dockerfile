@@ -47,8 +47,14 @@ RUN wget https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v1
     && apt-get install -f -y \
     && rm /tmp/clash-verge_1.7.7_arm64.deb
 
-# 设置 VNC 密码，如果环境变量 VNC_PASSWORD 存在
-RUN if [ -z "$VNC_PASSWORD" ]; then echo "No VNC password provided"; else x11vnc -storepasswd "$VNC_PASSWORD" /root/.vnc/passwd; fi
+# 创建 .vnc 目录，并直接使用环境变量设置密码
+RUN mkdir -p /root/.vnc && \
+    echo "$VNC_PASSWORD" | x11vnc -storepasswd - /root/.vnc/passwd
+
+# 设置 VNC 服务器启动命令
+RUN mkdir -p /etc/xdg/ \
+    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 -passwd /root/.vnc/passwd &" > /etc/xdg/start-vnc.sh \
+    && chmod +x /etc/xdg/start-vnc.sh
 
 # 设置 VNC 服务器启动命令
 RUN mkdir -p /etc/xdg/ \
