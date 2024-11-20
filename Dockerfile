@@ -36,26 +36,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装 noVNC
-RUN pip3 install websockify && \
-    mkdir -p /opt/novnc && \
-    wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.4.0.tar.gz | tar xz --strip-components=1 -C /opt/novnc && \
-    ln -s /opt/novnc/utils/novnc_proxy /usr/local/bin/novnc_proxy
+# 下载并安装 Clash Verge Rev 的 .deb 包
+RUN wget https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v1.7.7/clash-verge_1.7.7_arm64.deb -O /tmp/clash-verge_1.7.7_arm64.deb \
+    && dpkg -i /tmp/clash-verge_1.7.7_arm64.deb \
+    && apt-get install -f -y \
+    && rm /tmp/clash-verge_1.7.7_arm64.deb
 
-# 下载并安装 Clash Verge Rev
-RUN wget -q https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v1.7.7/clash-verge_1.7.7_arm64.deb -O /tmp/clash-verge.deb && \
-    dpkg -i /tmp/clash-verge.deb || apt-get -f install -y && \
-    rm -f /tmp/clash-verge.deb
+# 设置 VNC 服务器启动命令
+RUN mkdir -p /etc/xdg/ \
+    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 &" > /etc/xdg/start-vnc.sh \
+    && chmod +x /etc/xdg/start-vnc.sh
 
-# 设置工作目录
-WORKDIR /root
-
-# 下载 startup.sh 并保存到镜像中
-RUN wget -O /root/startup.sh https://raw.githubusercontent.com/gua12345/docker_clash_vnc/refs/heads/main/startup.sh && \
-    chmod +x /root/startup.sh
-
-# 暴露端口
-EXPOSE 5901 6081 7897 9097
-
-# 启动容器时运行脚本
-CMD ["/root/startup.sh"]
+# 启动 Clash Verge 和 noVNC 的命令
+CMD /etc/xdg/start-vnc.sh && websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT
