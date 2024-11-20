@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 设置默认环境变量
 ENV TZ=shanghai \
     VNC_HOST=127.0.0.1 \
-    VNC_PORT=5901 \
+    VNC_PORT=5900 \
     VNC_GEOMETRY=1280x800 \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y \
     libayatana-appindicator3-1 \
     libwebkit2gtk-4.0-37 \
     xvfb \
+    dbus \
     && apt-get clean
 
 # 阻止服务在构建时启动
@@ -48,15 +49,20 @@ RUN mkdir -p /root/.vnc && \
 
 # 创建启动脚本
 RUN echo "#!/bin/sh\n\
+# 启动 dbus 服务\n\
+service dbus start\n\
 # 启动虚拟显示\n\
 Xvfb :0 -screen 0 ${VNC_GEOMETRY}x24 &\n\
+sleep 5\n\
+# 启动 x11vnc 并绑定到 127.0.0.1:5900\n\
+x11vnc -display :0 -forever -usepw -passwdfile /root/.vnc/passwd -listen 127.0.0.1 -rfbport $VNC_PORT &\n\
 sleep 2\n\
-# 启动 x11vnc\n\
-x11vnc -display :0 -forever -usepw -passwdfile /root/.vnc/passwd &\n\
 # 启动 Clash Verge\n\
 clash-verge &\n\
-# 启动 noVNC\n\
-websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT" \
+sleep 2\n\
+# 启动 noVNC 并代理到 127.0.0.1:5900\n\
+websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT &\n\
+wait" \
 > /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
 # 使用启动脚本作为容器的入口点
