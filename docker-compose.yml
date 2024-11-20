@@ -3,7 +3,7 @@ services:
     container_name: clash-verge-rev
     image: gua12345/docker_clash_vnc:latest
     volumes:
-      - /root/clash-verge-rev:/config/.local/share/io.github.clash-verge-rev.clash-verge-rev
+      - /root/clash-verge-rev/clash:/config/.local/share/io.github.clash-verge-rev.clash-verge-rev
     ports:
       - "5901:5901"
       - "6081:6081"
