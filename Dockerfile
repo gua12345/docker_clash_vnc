@@ -38,7 +38,7 @@ RUN wget -q https://github.com/clash-verge-rev/clash-verge-rev/releases/download
 WORKDIR /root
 
 # 下载 startup.sh 并保存到镜像中
-RUN wget -O /root/startup.sh https://your-link-to-startup.sh && \
+RUN wget -O /root/startup.sh https://raw.githubusercontent.com/gua12345/docker_clash_vnc/refs/heads/main/startup.sh && \
     chmod +x /root/startup.sh
 
 # 暴露端口
