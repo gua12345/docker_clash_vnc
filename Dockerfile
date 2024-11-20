@@ -9,6 +9,7 @@ ENV TZ=shanghai \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
     NOVNC_PORT=6081
+    DEBIAN_FRONTEND=noninteractive
 
 # 更新系统并安装依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,6 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# 阻止服务在构建时启动
+RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d
     
 # 安装 Clash Verge 的依赖包
 RUN apt-get update && apt-get install -y --no-install-recommends \
