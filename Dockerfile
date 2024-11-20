@@ -12,6 +12,7 @@ ENV TZ=shanghai \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
     NOVNC_PORT=6081
+    VNC_PASSWORD=password
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -46,10 +47,15 @@ RUN wget https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v1
     && apt-get install -f -y \
     && rm /tmp/clash-verge_1.7.7_arm64.deb
 
+# 设置 VNC 密码，如果环境变量 VNC_PASSWORD 存在
+RUN if [ -z "$VNC_PASSWORD" ]; then echo "No VNC password provided"; else x11vnc -storepasswd "$VNC_PASSWORD" /root/.vnc/passwd; fi
+
 # 设置 VNC 服务器启动命令
 RUN mkdir -p /etc/xdg/ \
-    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 &" > /etc/xdg/start-vnc.sh \
+    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 -passwd /root/.vnc/passwd &" > /etc/xdg/start-vnc.sh \
     && chmod +x /etc/xdg/start-vnc.sh
 
 # 启动 Clash Verge 和 noVNC 的命令
-CMD /etc/xdg/start-vnc.sh && websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT
+CMD clash-verge & \
+    /etc/xdg/start-vnc.sh && \
+    websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT
