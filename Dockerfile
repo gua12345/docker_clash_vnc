@@ -4,17 +4,16 @@ FROM debian:bullseye-slim
 # 设置环境变量以避免交互
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 设置默认环境变量（用户可覆盖）
+# 设置默认环境变量
 ENV TZ=shanghai \
     VNC_HOST=127.0.0.1 \
     VNC_PORT=5901 \
     VNC_GEOMETRY=1280x800 \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
-    NOVNC_PORT=6081 \
-    VNC_PASSWORD=password
+    NOVNC_PORT=6081
 
-# 安装系统依赖
+# 安装系统依赖和 Xvfb
 RUN apt-get update && apt-get install -y \
     apt-transport-https \
     wget \
@@ -29,39 +28,36 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
+    libayatana-appindicator3-1 \
+    libwebkit2gtk-4.0-37 \
+    xvfb \
     && apt-get clean
 
 # 阻止服务在构建时启动
 RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d
-    
-# 安装 Clash Verge 的依赖包
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libayatana-appindicator3-1 \
-    libwebkit2gtk-4.0-37 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
-# 下载并安装 Clash Verge Rev 的 .deb 包
+# 下载并安装 Clash Verge 的 .deb 包
 RUN wget https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v1.7.7/clash-verge_1.7.7_arm64.deb -O /tmp/clash-verge_1.7.7_arm64.deb \
     && dpkg -i /tmp/clash-verge_1.7.7_arm64.deb \
     && apt-get install -f -y \
     && rm /tmp/clash-verge_1.7.7_arm64.deb
 
-# 创建 .vnc 目录，并直接使用环境变量设置密码
+# 创建 .vnc 目录，并设置密码文件
 RUN mkdir -p /root/.vnc && \
-    echo "$VNC_PASSWORD" | x11vnc -storepasswd - /root/.vnc/passwd
+    echo "password" | x11vnc -storepasswd - /root/.vnc/passwd
 
-# 设置 VNC 服务器启动命令
-RUN mkdir -p /etc/xdg/ \
-    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 -passwd /root/.vnc/passwd &" > /etc/xdg/start-vnc.sh \
-    && chmod +x /etc/xdg/start-vnc.sh
+# 创建启动脚本
+RUN echo "#!/bin/sh\n\
+# 启动虚拟显示\n\
+Xvfb :0 -screen 0 ${VNC_GEOMETRY}x24 &\n\
+sleep 2\n\
+# 启动 x11vnc\n\
+x11vnc -display :0 -forever -usepw -passwdfile /root/.vnc/passwd &\n\
+# 启动 Clash Verge\n\
+clash-verge &\n\
+# 启动 noVNC\n\
+websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT" \
+> /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
-# 设置 VNC 服务器启动命令
-RUN mkdir -p /etc/xdg/ \
-    && echo "x11vnc -forever -usepw -create -geometry $VNC_GEOMETRY -display :0 -passwd /root/.vnc/passwd &" > /etc/xdg/start-vnc.sh \
-    && chmod +x /etc/xdg/start-vnc.sh
-
-# 启动 Clash Verge 和 noVNC 的命令
-CMD clash-verge & \
-    /etc/xdg/start-vnc.sh && \
-    websockify --web /usr/share/novnc $NOVNC_HOST:$NOVNC_PORT $VNC_HOST:$VNC_PORT
+# 使用启动脚本作为容器的入口点
+CMD ["/usr/local/bin/start.sh"]
