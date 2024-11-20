@@ -11,7 +11,7 @@ ENV TZ=shanghai \
     VNC_GEOMETRY=1280x800 \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
-    NOVNC_PORT=6081
+    NOVNC_PORT=6081 \
     VNC_PASSWORD=password
 
 # 安装系统依赖
