@@ -1,6 +1,9 @@
 # 使用 ARM64 的 Debian Slim 基础镜像
 FROM debian:bullseye-slim
 
+# 设置环境变量以避免交互
+ENV DEBIAN_FRONTEND=noninteractive
+
 # 设置默认环境变量（用户可覆盖）
 ENV TZ=shanghai \
     VNC_HOST=127.0.0.1 \
@@ -9,7 +12,6 @@ ENV TZ=shanghai \
     TITLE="Clash Verge" \
     NOVNC_HOST=0.0.0.0 \
     NOVNC_PORT=6081
-    DEBIAN_FRONTEND=noninteractive
 
 # 更新系统并安装依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
