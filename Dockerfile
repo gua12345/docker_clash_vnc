@@ -13,18 +13,22 @@ ENV TZ=shanghai \
     NOVNC_HOST=0.0.0.0 \
     NOVNC_PORT=6081
 
-# 更新系统并安装依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    apt-transport-https \
     wget \
     curl \
+    gnupg2 \
+    xz-utils \
     x11vnc \
-    fluxbox \
-    xvfb \
+    novnc \
+    websockify \
     libgtk-3-0 \
-    python3 \
-    python3-pip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    && apt-get clean
 
 # 阻止服务在构建时启动
 RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d
